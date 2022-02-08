@@ -4,12 +4,68 @@ import numpy as np
 import argparse
 import threading
 import screen.record_screen as screen_recorder
-from keyboard.getkeys import key_check
 import cv2
+import pygame
 from PIL import Image
+from keyboard.getkeys import key_check
+
+
+pygame.init()
 
 cartella = "C:\\Users\\39347\\Desktop\\Self-Driving-Car-in-Video-Games-master\\output_directory"
 
+
+def counter_coordinates(output: np.ndarray) -> int:
+    if np.allclose(output, [-0.75,0.75], atol=0.25):
+        print("1")
+        return 1
+    elif np.allclose(output, [-0.25,0.75], atol=0.25):
+        print("2")
+        return 2
+    elif np.allclose(output, [0.25,0.75], atol=0.25):
+        print("3")
+        return 3
+    elif np.allclose(output, [0.75,0.75], atol=0.25):
+        print("4")
+        return 4
+    elif np.allclose(output, [-0.75,0.25], atol=0.25):
+        print("5")
+        return 5
+    elif np.allclose(output, [-0.25,0.25], atol=0.25):
+        print("6")
+        return 6
+    elif np.allclose(output, [0.25,0.25], atol=0.25):
+        print("7")
+        return 7
+    elif np.allclose(output, [0.75,0.25], atol=0.25):
+        print("8")
+        return 8
+    elif np.allclose(output, [-0.75,-0.25], atol=0.25):
+        print("9")
+        return 9
+    elif np.allclose(output, [-0.25,-0.25], atol=0.25):
+        print("10")
+        return 10
+    elif np.allclose(output, [0.25,-0.25], atol=0.25):
+        print("11")
+        return 11
+    elif np.allclose(output, [0.75,-0.25], atol=0.25):
+        print("12")
+        return 12
+    elif np.allclose(output, [-0.75,-0.75], atol=0.25):
+        print("13")
+        return 13
+    elif np.allclose(output, [-0.25,-0.75], atol=0.25):
+        print("14")
+        return 14
+    elif np.allclose(output, [0.25, -0.75], atol=0.25):
+        print("15")
+        return 15
+    elif np.allclose(output, [0.75, -0.75], atol=0.25):
+        print("16")
+        return 16
+
+    
 def save_data(dir_path: str, images: np.ndarray, y: int, number: int):
     """
     Save a trainign example
@@ -20,10 +76,17 @@ def save_data(dir_path: str, images: np.ndarray, y: int, number: int):
     Output:
 
     """
-
-    Image.fromarray(
-        cv2.cvtColor(np.concatenate(images, axis=1), cv2.COLOR_BGR2RGB)
-    ).save(os.path.join(dir_path, f"{number}_{y}.jpeg"))
+    lista = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    
+    if y in lista:
+        y = f"0{y}"
+        Image.fromarray(
+            cv2.cvtColor(np.concatenate(images, axis=1), cv2.COLOR_BGR2RGB)
+        ).save(os.path.join(dir_path, f"{number}_{y}.jpeg"))
+    else:
+        Image.fromarray(
+            cv2.cvtColor(np.concatenate(images, axis=1), cv2.COLOR_BGR2RGB)
+        ).save(os.path.join(dir_path, f"{number}_{y}.jpeg"))
 
 
 def get_last_file_num(dir_path: str) -> int:
@@ -43,38 +106,31 @@ def get_last_file_num(dir_path: str) -> int:
 
     return -1 if len(files) == 0 else max(files)
 
+# This is a simple class that will help us print to the screen.
+# It has nothing to do with the joysticks, just outputting the
+# information.
+class TextPrint(object):
+    def __init__(self):
+        self.reset()
+        self.font = pygame.font.Font(None, 20)
 
-def counter_keys(key: np.ndarray) -> int:
-    """
-    Multi-hot vector to one hot vector (represented as an integer)
-    Input:
-     - key numpy array of integers (1,0) of size 4
-    Output:
-    - One hot vector encoding represented as an index (int). If the vector does not represent any valid key
-    input the returned value will be -1
+    def tprint(self, screen, textString):
+        textBitmap = self.font.render(textString, True, BLACK)
+        screen.blit(textBitmap, (self.x, self.y))
+        self.y += self.line_height
 
-    """
-    if np.array_equal(key, [0, 0, 0, 0]):
-        return 0
-    elif np.array_equal(key, [1, 0, 0, 0]):
-        return 1
-    elif np.array_equal(key, [0, 1, 0, 0]):
-        return 2
-    elif np.array_equal(key, [0, 0, 1, 0]):
-        return 3
-    elif np.array_equal(key, [0, 0, 0, 1]):
-        return 4
-    elif np.array_equal(key, [1, 0, 1, 0]):
-        return 5
-    elif np.array_equal(key, [1, 0, 0, 1]):
-        return 6
-    elif np.array_equal(key, [0, 1, 1, 0]):
-        return 7
-    elif np.array_equal(key, [0, 1, 0, 1]):
-        return 8
-    else:
-        return -1
+    def reset(self):
+        self.x = 10
+        self.y = 10
+        self.line_height = 15
 
+    def indent(self):
+        self.x += 10
+
+    def unindent(self):
+        self.x -= 10
+
+textPrint = TextPrint()
 
 def generate_dataset(output_dir: str, use_probability: bool = True) -> None:
     """
@@ -122,76 +178,91 @@ def generate_dataset(output_dir: str, use_probability: bool = True) -> None:
     number_of_files: int = get_last_file_num(output_dir) + 1
     time.sleep(6)
     last_num: int = 5  # The image sequence starts with images containing zeros, wait until it is filled
-
-    number_of_keys = np.asarray([0, 0, 0, 0, 0, 0, 0, 0, 0])
-
+    
+    training_data = []
+    
     while True:
+
+        paused = False
 
         while last_num == screen_recorder.num:
             time.sleep(0.01)
 
         last_num = screen_recorder.num
         img_seq, output = screen_recorder.seq.copy(), screen_recorder.key_out.copy()
-
+    
         print(
             f"Recording at {screen_recorder.fps} FPS\n"
             f"Images in sequence {len(img_seq)}\n"
             f"Training data len {number_of_files} sequences\n"
             f"Number of archives {number_of_files}\n"
-            f"Keys pressed: {output}\n"
-            f"Keys samples recorded: "
-            f"None: {str(number_of_keys[0])} "
-            f"A: {str(number_of_keys[1])} "
-            f"D {str(number_of_keys[2])} "
-            f"W {str(number_of_keys[3])} "
-            f"S {str(number_of_keys[4])} "
-            f"AW {str(number_of_keys[5])} "
-            f"AS {str(number_of_keys[6])} "
-            f"WD {str(number_of_keys[7])} "
-            f"SD {str(number_of_keys[8])}\n"
             f"Push QE to exit\n",
             end="\r",
         )
+        
+        for event in pygame.event.get(): # User did something
+            if event.type == pygame.QUIT: #If user clicked close
+                break
+            elif event.type == pygame.JOYBUTTONDOWN:
+                print("Joystick button pressed")
+            elif event.type == pygame.JOYBUTTONUP:
+                print("Joystick button released")
 
-        key = counter_keys(output)
+        if not paused:
+            joystick_count = pygame.joystick.get_count()
 
-        if key != -1:
-            if use_probability:
-                total = np.sum(number_of_keys)
-                key_num = number_of_keys[key]
-                if total != 0:
-                    prop = ((total - key_num) / total) ** 2
-                    if prop < 0.5:
-                        prop = 0.1
+            print("Number of joysticks: {}".format(joystick_count))
 
-                else:
-                    prop = 1.0
-                if np.random.rand() <= prop:
-                    number_of_keys[key] += 1
+            
+            joystick = pygame.joystick.Joystick(0)
+            joystick.init()
+        
+            print("Joystick {}".format(0))
 
-                    save_data(
-                        dir_path=output_dir,
-                        images=img_seq,
-                        y=key,
-                        number=number_of_files,
-                    )
-                    number_of_files += 1
+        
+            name = joystick.get_name()
+            print("Joystick name: {}".format(name))
+        
+            axes = joystick.get_numaxes()
+            print("Number of axes: {}".format(axes))
 
-            else:
-                number_of_keys[key] += 1
-                save_data(
-                    dir_path=output_dir, images=img_seq, y=key, number=number_of_files
-                )
-                number_of_files += 1
+        
+            axis_0 = joystick.get_axis(0)#steering
+            print("Axis {} value: {:>6.3f}".format(0, axis_0))
+
+            #axis_1 = joystick.get_axis(1)
+            #print("Axis {} value: {:>6.3f}".format(1, axis_1))
+        
+            #axis_2 = joystick.get_axis(2)#brake
+            #print("Axis {} value: {:>6.3f}".format(2, axis_2))
+    
+            #axis_3 = joystick.get_axis(3)
+            #print("Axis {} value: {:>6.3f}".format(3, axis_3))
+    
+            #axis_4 = joystick.get_axis(4)
+            #print("Axis {} value: {:>6.3f}".format(4, axis_4))
+    
+            axis_5 = joystick.get_axis(5)#throttle
+            print("Axis {} value: {:>6.3f}".format(5, axis_5))
+        #
+            output = [axis_0, axis_5] #[steering, throttle]
+            print(output)
+
+        output = counter_coordinates(output)
+            
+        save_data(dir_path=output_dir, images=img_seq, y=output, number=number_of_files)
+        number_of_files += 1
+
+
 
         keys = key_check()
         if "Q" in keys and "E" in keys:
+            paused = True
             print("\nStopping...")
             stop_recording.set()
             th_seq.join()
             th_img.join()
             break
-
 
 if __name__ == "__main__":
 
