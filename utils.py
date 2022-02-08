@@ -99,7 +99,7 @@ def evaluate(
             return correct / total
         else:
             print("ZeroDivisionError: division by zero " + "  ** predictions are 0! **"
-            print("Predictions: " + predictions)
+            print(predictions)
     
 
 
