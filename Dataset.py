@@ -208,7 +208,7 @@ class Tedd1104Dataset(Dataset):
 
         img_name = self.dataset_files[idx]
         image = io.imread(img_name)
-        y = int(os.path.basename(img_name)[-6])
+        y = int(os.path.basename(img_name)[-7]) * 10 + int(os.path.basename(img_name)[-6])
         sample = {"image": image, "y": y}
 
         return self.transform(sample)
