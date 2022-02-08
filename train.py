@@ -278,10 +278,10 @@ def train(
 
 
 def train_new_model(
-    train_dir="Data\\GTAV-AI\\data-v2\\train\\",
-    dev_dir="Data\\GTAV-AI\\data-v2\\dev\\",
-    test_dir="Data\\GTAV-AI\\data-v2\\test\\",
-    output_dir="Data\\models\\",
+    train_dir="//content//output_directory//",
+    dev_dir="//content//output_directory//Dev//",
+    test_dir="//content//output_directory//Train//",
+    output_dir="//content//Autopilot//",
     batch_size=10,
     accumulation_steps: int = 1,
     num_epoch=20,
@@ -407,10 +407,10 @@ def train_new_model(
 
 def continue_training(
     checkpoint_path: str,
-    train_dir: str = "Data\\GTAV-AI\\data-v2\\train\\",
-    dev_dir: str = "Data\\GTAV-AI\\data-v2\\dev\\",
-    test_dir: str = "Data\\GTAV-AI\\data-v2\\test\\",
-    output_dir: str = "Data\\models\\",
+    train_dir="//content//output_directory//",
+    dev_dir="//content//output_directory//Dev//",
+    test_dir="//content//output_directory//Train//",
+    output_dir="//content//Autopilot//",
     batch_size: int = 10,
     accumulation_steps: int = 1,
     num_epoch: int = 20,
