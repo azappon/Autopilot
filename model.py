@@ -213,10 +213,10 @@ class OutputLayer(nn.Module):
             for i in range(1, len(layers)):
                 linear_layers.append(nn.Linear(layers[i - 1], layers[i]))
                 linear_layers.append(nn.ReLU())
-            linear_layers.append(nn.Linear(layers[-1], 9))
+            linear_layers.append(nn.Linear(layers[-1], 16))
 
         else:
-            linear_layers.append(nn.Linear(hidden_size, 9))
+            linear_layers.append(nn.Linear(hidden_size, 16))
 
         self.linear = nn.Sequential(*linear_layers)
         self.softmax = nn.Softmax(dim=1)
