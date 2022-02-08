@@ -93,13 +93,12 @@ def evaluate(
         else:
             predictions: np.ndarray = model.predict(x).cpu()
         
-        if len(predictions) != 0:
-            correct += (predictions == y).sum().numpy()
-            total += len(predictions)
-            return correct / total
-        else:
-            print("ZeroDivisionError: division by zero " + "  ** predictions are 0! **"
-            print(predictions)
+
+        correct += (predictions == y).sum().numpy()
+        total += len(predictions)
+        assert total != 0, "ZeroDivisionError: division by zero " + "  ** predictions are 0! **"
+        return correct / total
+            
     
 
 
